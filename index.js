@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
+const dotenv = require('dotenv');
 const app = express();
 const port = process.env.PORT || 5000;
-const dotenv = require('dotenv');
+
 dotenv.config();
 
 // middleware 
@@ -26,12 +27,25 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    // creating a user collection
+    const userCollection = client.db("usersDB").collection("users");
+    console.log("Connected to db");
+
+
+    // saving the user 
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 
