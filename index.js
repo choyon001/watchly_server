@@ -40,6 +40,19 @@ async function run() {
       res.send(result);
     });
 
+    // update createdDate when user sign in 
+    app.patch('/users', async (req, res) => {
+      const email = req.body.email;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: {
+          lastLogin: req.body.lastLogin
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -49,6 +62,9 @@ async function run() {
   }
 }
 
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 
 run().catch(console.dir);
 
