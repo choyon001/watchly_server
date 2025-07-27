@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -11,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.idwrkpb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -61,6 +62,69 @@ async function run() {
       const result = await moviesCollection.insertOne(movie);
       res.send(result);
     });
+
+    // Get all movies for any user 
+    app.get('/movies', async (req, res) => {
+      const movies = await moviesCollection.find().toArray();
+      res.send(movies);
+    });
+
+    // get movie by movie id 
+    app.get('/movies/:id', async (req, res) => {
+      const id = req.params.id;
+      const movie = await moviesCollection.findOne({ _id: new ObjectId(id) });
+      res.send(movie);
+    });
+    
+    // delete movie by id
+    app.delete('/movies/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await moviesCollection.deleteOne({ _id: new ObjectId(id) });
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: "Movie not found" });
+      }
+      res.json({ message: "Movie deleted successfully" });
+    });
+
+    // add to favorite movies
+    const favoritesCollection = client.db("usersDB").collection("favorites");
+
+     app.post('/favorites', async (req, res) => {
+      const { email, _id } = req.body;
+
+      // Check for duplicate
+      const exists = await favoritesCollection.findOne({ email, _id: new ObjectId(_id) });
+      if (exists) {
+        return res.status(409).json({ error: "Already added to favorites" });
+      }
+
+      const result = await favoritesCollection.insertOne(req.body);
+      res.status(201).send(result);
+    });
+
+    // favorites by user email
+    app.get('/favorites/:email', async (req, res) => {
+      const email = req.params.email;
+      const favorites = await favoritesCollection.find({ email }).toArray();
+      res.send(favorites);
+    });
+
+// remove a movie from favorites (by favorite ID)
+app.delete('/favorites/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await favoritesCollection.deleteOne({ _id:id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Favorite not found' });
+    }
+    res.json({ message: 'Favorite removed successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove favorite' });
+  }
+});
+
+
+    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
