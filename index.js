@@ -27,11 +27,11 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     // creating a user collection
     const userCollection = client.db("usersDB").collection("users");
-    console.log("Connected to db");
+    // console.log("Connected to db");
 
 
     // saving the user 
@@ -203,8 +203,8 @@ app.patch('/users/profile', async (req, res) => {
 });
     
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin"). command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -212,7 +212,7 @@ app.patch('/users/profile', async (req, res) => {
 }
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  // console.log(`Server is running on port ${port}`);
 });
 
 run().catch(console.dir);
