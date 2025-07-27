@@ -123,6 +123,37 @@ app.delete('/favorites/:id', async (req, res) => {
   }
 });
 
+// making a route for top contributors
+app.get('/top-contributors', async (req, res) => {
+  try {
+    const result = await moviesCollection.aggregate([
+      {
+        $group: {
+          _id: "$userEmail",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          email: "$_id",
+          count: 1,
+          _id: 0
+        }
+      },
+      {
+        $sort: { count: -1 }
+      },
+      {
+        $limit: 6
+      }
+    ]).toArray();
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error getting top contributors:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
     
     // Send a ping to confirm a successful connection
