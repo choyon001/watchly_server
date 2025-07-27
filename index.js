@@ -155,6 +155,52 @@ app.get('/top-contributors', async (req, res) => {
   }
 });
 
+//  update profile for user
+app.patch('/users/profile', async (req, res) => {
+  try {
+    const { email, name, photoURL } = req.body;
+    const filter = { email: email };
+    
+    // First get the current user data
+    const user = await userCollection.findOne(filter);
+    
+    if (!user) {
+      return res.status(404).send({ success: false, message: "User not found" });
+    }
+
+    // Check if the new values are actually different
+    
+    const currentName = user.displayName || user.name;
+    const currentPhoto = user.photoURL || user.photo;
+
+    if (currentName === name && currentPhoto === photoURL) {
+      return res.status(200).send({ 
+        success: true, 
+        message: "No changes detected", 
+        modifiedCount: 0 
+      });
+    }
+
+    // Update both possible field names to be safe
+    const updateDoc = {
+      $set: { 
+        displayName: name,
+        name: name, // Update both fields for consistency
+        photoURL: photoURL 
+      }
+    };
+
+    const result = await userCollection.updateOne(filter, updateDoc);
+    res.send({ 
+      success: true, 
+      modifiedCount: result.modifiedCount,
+      message: result.modifiedCount ? "Profile updated" : "No changes made"
+    });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).send({ success: false, error: error.message });
+  }
+});
     
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
